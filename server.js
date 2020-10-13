@@ -9,6 +9,10 @@ const { animals } = require('./data/animals.json');
 
 // ========================== imports end here ========================== //
 
+// tell the app to use an environment variable called process.env.PORT
+// tells the app to use that PORT, if it has been set, otherwise default to port 80
+const PORT = process.env.PORT || 80;
+
 // Setting up the server only takes two steps: 
 // 1. we need to instantiate the server, 
 // 2. tell it to listen for requests. 
@@ -98,9 +102,10 @@ app.get('/api/animals', (req, res) => {
     res.json(results);
 });
 
+// 2. this is where we have our app listening
 // we will chain the express.js method called listen() onto app
 // this creates a server that listens on port 3001
 // when port 3001 gets accessed, it responds back
-app.listen(3001, () => {
-    console.log(`API server now on port 3001`);
+app.listen(PORT, () => {
+    console.log(`API server now on port ${PORT}!`);
 });
