@@ -11,7 +11,7 @@ const { animals } = require('./data/animals.json');
 
 // tell the app to use an environment variable called process.env.PORT
 // tells the app to use that PORT, if it has been set, otherwise default to port 80
-const PORT = process.env.PORT || 80;
+const PORT = process.env.PORT || 3001;
 
 // Setting up the server only takes two steps: 
 // 1. we need to instantiate the server, 
@@ -22,6 +22,7 @@ const app = express();
 // we have assigned express() to app
 // so that we can later chain on methods to the express.js server
 
+// used by first route
 // creates a function that takes in a query and an array of strings as an argument
 // and filters through the animals accordingly
 // returning a new filtered array
@@ -72,6 +73,14 @@ function filterByQuery(query, animalsArray) {
     return filteredResults;
 }
 
+// used by second route
+// takes in the id and array of animals and returns a single animal object
+function findById(id, animalsArray) {
+    const result = animalsArray.filter(animal => animal.id === id)[0];
+    return result;
+}
+
+// first route
 // use the get() method to create a route that the front-end can request data from
 // get() requires two arguments
 // 1. string that describes the route (address) the client will have to fetch from
@@ -100,6 +109,29 @@ app.get('/api/animals', (req, res) => {
     }
 
     res.json(results);
+});
+
+// second route
+// when multiple routes are required, a param route must come after the other GET route
+// handles specify one animal rather than an array of all animals that match a query
+// use the req.params property which is defined in the route path
+// passes the parameters in a new function
+// it will return a single animal, because the id is unique.
+// We also know that there won't be any query on a single animal,
+// so there's no need for all of the other code.
+app.get('/api/animals/:id', (req, res) => {
+
+    const result = findById(req.params.id, animals);
+
+    // response is a single object instead of an array
+    if (result) {
+        res.json(result);
+    } 
+    // if no record exists for the animal being searched for,
+    // the client receives a 404 error
+    else {
+        res.send(404);
+    }
 });
 
 // 2. this is where we have our app listening
