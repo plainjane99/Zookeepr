@@ -66,7 +66,7 @@ function filterByQuery(query, animalsArray) {
       filteredResults = filteredResults.filter(animal => animal.name === query.name);
     }
     return filteredResults;
-  }
+}
 
 // use the get() method to create a route that the front-end can request data from
 // get() requires two arguments
