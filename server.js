@@ -51,6 +51,13 @@ app.use(express.json());
 // both of the above funtions need to be set up every time you create a server that's
 // looking to accept POST data
 
+// Express.js middleware that instructs the server to make certain files readily available and 
+// to not gate it behind a server endpoint
+// this makes all of the files in the public directory available
+// by instructing the server to make these files static resources
+// files in public include all html, css, js for front end
+app.use(express.static('public'));
+
 // used by first route
 // creates a function that takes in a query and an array of strings as an argument
 // and filters through the animals accordingly
@@ -240,6 +247,25 @@ app.post('/api/animals', (req, res) => {
         // sends the data back to the client.
         res.json(animal);
     }
+});
+
+// this get route responds with an html page to display in the browser
+// the "/" route represents the root route
+app.get('/', (req, res) => {
+    // path module ensures we're finding the correct location for the html code we want to display in the browser
+    res.sendFile(path.join(__dirname, './public/index.html'));
+});
+
+// does not include "api" in the route
+// this is intentional.  this more "normal-looking" endpoint should indicate we are serving up html page
+// this route is for the animal page
+app.get('/animals', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/animals.html'));
+});
+
+// this route is for the zookeeper page
+app.get('/zookeepers', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/zookeepers.html'));
 });
 
 // 2. this is where we have our app listening
