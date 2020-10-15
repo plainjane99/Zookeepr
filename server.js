@@ -7,6 +7,13 @@ const express = require('express');
 // but why????? and what does this have to do with the route???
 const { animals } = require('./data/animals.json');
 
+// We'll have to not only use .push() to 
+// save the new data in this local server.js copy of our animal data, but 
+// we'll also have to import and use the fs library to write that data to animals.json.
+const fs = require('fs');
+// module built into the Node.js API that provides utilities for working with file and directory paths
+const path = require('path');
+
 // ========================== imports end here ========================== //
 
 // tell the app to use an environment variable called process.env.PORT
@@ -21,6 +28,28 @@ const PORT = process.env.PORT || 3001;
 const app = express();
 // we have assigned express() to app
 // so that we can later chain on methods to the express.js server
+
+// In order for our server to accept incoming data the way we need it to, 
+// we need to tell our Express.js app to intercept our POST request before 
+// it gets to the callback function. 
+// At that point, the data will be run through a couple of functions to 
+// take the raw data transferred over HTTP and convert it to a JSON object.
+// app.use is a method executed by our Express.js server that 
+// mounts a function to the server that our requests will pass through before 
+// getting to the intended endpoint. 
+// The functions we can mount to our server are referred to as middleware.
+// parse incoming string or array data
+// express.url... is an express method that takes incoming POST data and
+// converts it to key/value pairings that can be accessed in the req.body object
+// extended: true option informs our server that there may be sub-array data nested in it
+// so it needs to look as deep into the POST data as possible
+app.use(express.urlencoded({ extended: true }));
+// express.json takes incoming POST data in the form of JSON and
+// parses it into the req.body javascript object
+// parse incoming JSON data
+app.use(express.json());
+// both of the above funtions need to be set up every time you create a server that's
+// looking to accept POST data
 
 // used by first route
 // creates a function that takes in a query and an array of strings as an argument
@@ -80,6 +109,57 @@ function findById(id, animalsArray) {
     return result;
 }
 
+// function that accepts the POST route's req.body value and 
+// the array we want to add the data to. 
+// In this case, that array will be the animalsArray, because 
+// the function is for adding a new animal to the catalog.
+function createNewAnimal(body, animalsArray) {
+    const animal = body;
+    // saves the data to the array so that it can be written
+    animalsArray.push(animal);
+
+    // fs.writeFileSync is the synchronous version of fs.writeFile
+    // use the fs library to write that data to the json file
+    fs.writeFileSync(
+        // we want to write to our animals.json file in the data subdirectory, so 
+        // we use the method path.join() to join the value of __dirname, which 
+        // represents the directory of the file we execute the code in, with 
+        // the path to the animals.json file.
+        path.join(__dirname, './data/animals.json'),
+        // save the javascript array data as json
+        // null argument means we don't want to edit any of our existing data
+        // "2" indicates we want to create white space between our values to make it readable
+        JSON.stringify({ animals: animalsArray }, null, 2)
+    );
+  
+    // return finished code to post route for response
+    return animal;
+}
+
+// validate that each key exists and that data is the right type
+function validateAnimal(animal) {
+    if (!animal.name || typeof animal.name !== 'string') {
+      return false;
+    }
+    if (!animal.species || typeof animal.species !== 'string') {
+      return false;
+    }
+    if (!animal.diet || typeof animal.diet !== 'string') {
+      return false;
+    }
+    if (!animal.personalityTraits || !Array.isArray(animal.personalityTraits)) {
+      return false;
+    }
+    return true;
+}
+
+// When we make any type of request to the server, 
+// Express.js will go through a couple of different phases. 
+// First, it'll take the URL we made a request to and 
+// check to see if it's one of the URL endpoints we've defined. 
+// Once it finds a matching route, it then checks to see the method of the request and 
+// determines which callback function to execute.
+
 // first route
 // use the get() method to create a route that the front-end can request data from
 // get() requires two arguments
@@ -131,6 +211,34 @@ app.get('/api/animals/:id', (req, res) => {
     // the client receives a 404 error
     else {
         res.send(404);
+    }
+});
+
+// create an API endpoint that allows a user to add new animals to the JSON file
+// storing all of our data
+// set up a route on our server that accepts data to be used or stored server-side
+// post is another method of the app object that allows us to create routes
+// we defined a route that listens for POST requests, not GET requests
+// GET requests represent the action of a client requesting the server to accept data
+// rather than vice versa
+app.post('/api/animals', (req, res) => {
+    // req.body is where our incoming content will be
+    // POST requests, we can package up data, typically as an object, and send it to the server
+    // req.body property is where we can access that data on the server side and do something with it
+    // set id based on what the next index of the array will be
+    // allows client to add data with a new id
+    req.body.id = animals.length.toString();
+
+    // if any data in req.body is incorrect, send 400 error back
+    if (!validateAnimal(req.body)) {
+        // line res.status().send(); is a response method to relay a message to the client making the request
+        res.status(400).send('The animal is not properly formatted.');
+    } else {
+        // add animal to json file and animals array in this function
+        const animal = createNewAnimal(req.body, animals);
+
+        // sends the data back to the client.
+        res.json(animal);
     }
 });
 
